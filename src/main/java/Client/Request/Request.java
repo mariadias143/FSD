@@ -1,5 +1,6 @@
-package Client.Req;
+package Client.Request;
 
+import Client.Client;
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.utils.net.Address;
 import io.atomix.utils.serializer.Serializer;

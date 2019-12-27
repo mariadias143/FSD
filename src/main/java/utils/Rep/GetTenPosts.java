@@ -1,11 +1,10 @@
-package Client.Rep;
+package utils.Rep;
 
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.utils.net.Address;
 import io.atomix.utils.serializer.Serializer;
 
 import java.util.Collection;
-import java.util.List;
 
 public class GetTenPosts implements Reply {
      private Collection<String> messages;

@@ -1,6 +1,6 @@
-package Client.Req;
+package utils.Req;
 
-
+import Client.Request.Request;
 
 public class GetMessage extends Request {
 

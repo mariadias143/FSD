@@ -1,13 +1,19 @@
 package Client;
 
-import Client.Rep.*;
-import Client.Req.*;
+import Client.Request.Get;
+import Client.Request.Post;
+import Client.Request.Request;
+import utils.Rep.GetTenPosts;
+import utils.Rep.Reply;
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.cluster.messaging.MessagingConfig;
 import io.atomix.cluster.messaging.impl.NettyMessagingService;
 import io.atomix.utils.net.Address;
 import io.atomix.utils.serializer.Serializer;
 import io.atomix.utils.serializer.SerializerBuilder;
+import utils.Req.GetMessage;
+import utils.Req.PostMessage;
+import utils.Req.Subscribe;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -37,7 +43,7 @@ public class Client {
                 new MessagingConfig());
         ms.start();
         this.s = new SerializerBuilder()
-                .withTypes(Request.class, GetMessage.class, PostMessage.class, Subscribe.class)
+                .withTypes(Request.class,Get.class, Post.class)
                 .build();
 
         ms.registerHandler("REPLY/messages", (a, b) -> {
@@ -57,10 +63,10 @@ public class Client {
         String[] header = input.split("/");
         switch (header[0]) {
             case "GET":
-                handlerGET(header);
+                sendGET(input);
                 break;
             case "POST":
-                handlerPOST(header);
+                sendPOST(input);
                 break;
 
         }
@@ -68,24 +74,50 @@ public class Client {
     }
 
 
-    public void handlerGET(String[] header) {
-        if (header[1].equals("messages")) {
-            Request req = new GetMessage();
-            req.sender(ms, forwarderAddress, s);
-        }
-    }
-
-    public void handlerPOST(String[] header) {
-        if ((header.length >= 4) && header[0].equals("POST") && header[1].equals("message")) {
-            sendPostMessage(header);
-        } else {
-            if (header.length >= 3 && header[0].equals("POST") && header[1].equals("subscribe")) {
-                sendPostSubscribe(header);
-            }
-        }
+    public void sendGET(String request) {
+       Request get = new Get(request);
+       get.sender(ms,forwarderAddress,s);
     }
 
 
+    public void sendPOST(String request){
+        Request post = new Post(request);
+        post.sender(ms,forwarderAddress,s);
+    }
+
+
+
+    public static void main(String[] args) throws Exception {
+
+        Client client = new Client(args[0], args[1]);
+
+        String input;
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        while ((input = in.readLine()) != null) {
+            client.handlerInput(input);
+
+        /*
+            GET/messages
+            POST/message/topic/text
+            POST/subscribe/topic
+         */
+
+
+        }
+    }
+
+    /*
+public void handlerPOST(String request) {
+    if ((header.length >= 4) && header[0].equals("POST") && header[1].equals("message")) {
+        sendPostMessage(header);
+    } else {
+        if (header.length >= 3 && header[0].equals("POST") && header[1].equals("subscribe")) {
+            sendPostSubscribe(header);
+        }
+    }
+}
+
+*/
     public void sendPostMessage(String[] header) {
         String topic[] = header[2].split(" ");
         Collection<String> topics = new ArrayList<>();
@@ -114,23 +146,4 @@ public class Client {
 
     }
 
-
-    public static void main(String[] args) throws Exception {
-
-        Client client = new Client(args[0], args[1]);
-
-        String input;
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        while ((input = in.readLine()) != null) {
-            client.handlerInput(input);
-
-        /*
-            GET/messages
-            POST/message/topic/text
-            POST/subscribe/topic
-         */
-
-
-        }
-    }
 }

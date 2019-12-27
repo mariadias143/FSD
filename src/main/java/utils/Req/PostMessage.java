@@ -1,4 +1,6 @@
-package Client.Req;
+package utils.Req;
+
+import Client.Request.Request;
 
 import java.util.Collection;
 
