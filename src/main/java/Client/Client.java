@@ -41,7 +41,9 @@ public class Client {
                 "teste",
                 this.myAddress,
                 new MessagingConfig());
+
         ms.start();
+
         this.s = new SerializerBuilder()
                 .withTypes(Request.class,Get.class, Post.class)
                 .build();

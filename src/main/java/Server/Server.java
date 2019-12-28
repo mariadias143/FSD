@@ -25,44 +25,53 @@ import Server.Middleware.TotalOrder.*;
 
 
 public class Server {
-    public Scanner in = new Scanner(System.in);
     public Address[] peers;
     public ManagedMessagingService ms;
     public int port;
+    public int idp;
+    public Election elector;
+    public ServerUtil service;
+    public TotalOrderFixedSequencer totalorder;
 
-    public Server(int port){
+    public Server(int port,int number_of_peers){
         this.port = port;
-        peers = new Address[]{
-                Address.from(12345),
-                Address.from(12346),
-                Address.from(12347)
-        };
-    }
+        this.peers = new Address[number_of_peers];
 
-    public static void main(String[] args) throws IOException {
-        int port = Integer.parseInt(args[0]);
+        for (int i = 0; i < number_of_peers; i++) {
+            this.peers[i] = Address.from(12345+i);
+        }
         ScheduledExecutorService e = Executors.newScheduledThreadPool(1);
 
         ManagedMessagingService ms = new NettyMessagingService("Wannabe twitter",
                 Address.from(port),
                 new MessagingConfig());
 
-        Serializer s = new SerializerBuilder()
-        //        .addType(Message.class)
-                .addType(Message.class)
-        //        .addType(Clock.class)
-                .build();
-
-        Server chat = new Server(port);
-
-        int idp = port - 12345;
-
         ms.start();
 
-        Election elector = new Election(idp,chat.peers,new ServerUtil(ms,e));
+        this.service = new ServerUtil(ms,e);
+        this.idp = port - 12345;
+        this.elector = new Election(idp,this.peers,service);
+        this.totalorder = new TotalOrderFixedSequencer(elector,service);
+        //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
+
+        ms.registerHandler("msg",(a,b) ->{
+            Message m = this.service.s.decode(b);
+            totalorder.send(m);
+        },e);
+
+
+    }
+
+    public static void main(String[] args) throws IOException {
+        int port = Integer.parseInt(args[0]);
+        int n_peers = Integer.parseInt(args[1]);
+
+        Server twitter = new Server(port,n_peers);
+
+        //Election elector = new Election(idp,chat.peers,new ServerUtil(ms,e));
 
         //TotalOrderFixedSequencer totalorder = new TotalOrderFixedSequencer(elector,new ServerUtil(ms,e));
-        TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
+        //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
 
         /**
         if(idp == 0){
@@ -70,14 +79,5 @@ public class Server {
             asc.nextLine();
             elector.init_election();
         }*/
-
-
-
-
-
-        ms.registerHandler("msg",(a,b) ->{
-            Message m = s.decode(b);
-            totalorder.send(m);
-        },e);
     }
 }

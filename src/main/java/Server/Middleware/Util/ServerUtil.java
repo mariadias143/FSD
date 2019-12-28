@@ -1,6 +1,8 @@
 package Server.Middleware.Util;
 
 import Server.Middleware.LeaderElection.ElectionMessage;
+import Server.Middleware.TotalOrder.Message;
+import Server.Middleware.TotalOrder.Token;
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.utils.serializer.Serializer;
 import io.atomix.utils.serializer.SerializerBuilder;
