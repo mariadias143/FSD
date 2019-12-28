@@ -34,30 +34,19 @@ public class Client {
     private ExecutorService e;
 
     public Client(String myAddress, String forwarderAddress) {
-        this.myAddress = Address.from(myAddress);
-        this.forwarderAddress = Address.from(forwarderAddress);
+        this.myAddress = new Address("0.0.0.0", Integer.parseInt(myAddress));
+        this.forwarderAddress = new Address("0.0.0.0", Integer.parseInt(forwarderAddress));
+
         this.e = Executors.newFixedThreadPool(1);
         this.ms = new NettyMessagingService(
-                "teste",
+                "Client",
                 this.myAddress,
                 new MessagingConfig());
-
         ms.start();
-
         this.s = new SerializerBuilder()
-                .withTypes(Request.class,Get.class, Post.class)
+                .withTypes(Request.class, Get.class, Post.class)
                 .build();
 
-        ms.registerHandler("REPLY/messages", (a, b) -> {
-            Reply reply = s.decode(b);//  decode da mensagem
-            if (reply instanceof GetTenPosts) {
-                System.out.println("Topic : " + ((GetTenPosts) reply).getTopic());
-                for (String message : ((GetTenPosts) reply).getMessages()) {
-                    System.out.println(message);
-                }
-            }
-
-        }, e);
 
     }
 
@@ -77,16 +66,17 @@ public class Client {
 
 
     public void sendGET(String request) {
-       Request get = new Get(request);
-       get.sender(ms,forwarderAddress,s);
+        Request get = new Get(request);
+        System.out.println(forwarderAddress);
+        get.sender(ms, forwarderAddress, s);
     }
 
 
-    public void sendPOST(String request){
+    public void sendPOST(String request) {
         Request post = new Post(request);
-        post.sender(ms,forwarderAddress,s);
+        System.out.println(forwarderAddress);
+        post.sender(ms, forwarderAddress, s);
     }
-
 
 
     public static void main(String[] args) throws Exception {
@@ -107,45 +97,4 @@ public class Client {
 
         }
     }
-
-    /*
-public void handlerPOST(String request) {
-    if ((header.length >= 4) && header[0].equals("POST") && header[1].equals("message")) {
-        sendPostMessage(header);
-    } else {
-        if (header.length >= 3 && header[0].equals("POST") && header[1].equals("subscribe")) {
-            sendPostSubscribe(header);
-        }
-    }
-}
-
-*/
-    public void sendPostMessage(String[] header) {
-        String topic[] = header[2].split(" ");
-        Collection<String> topics = new ArrayList<>();
-        for (String top : topic) {
-            topics.add(top);
-        }
-
-        String message = header[3];
-        if (header.length > 4)// caso a mensagem contenha /
-            for (int i = 4; i < header.length; i++)
-                message.concat(header[i]);
-
-        Request m1 = new PostMessage(message, topics);
-        m1.sender(ms, forwarderAddress, s);
-
-    }
-
-    public void sendPostSubscribe(String[] header) {
-        String topic[] = header[2].split(" ");
-        Collection<String> topics = new ArrayList<>();
-        for (String top : topic) {
-            topics.add(top);
-        }
-        Request m2 = new Subscribe(topics);
-        m2.sender(ms, forwarderAddress, s);
-
-    }
-
 }
