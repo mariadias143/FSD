@@ -5,9 +5,9 @@ import Client.Client;
 import Client.Request.Request;
 
 public class Post extends Request {
-    private String request;
-    public Post(String request){
-        this.request = request;
-        super.setRequest(this.request);
+
+    public Post(String request,String username,String password){
+        super(username,password);
+        super.setRequest(request);
     }
 }

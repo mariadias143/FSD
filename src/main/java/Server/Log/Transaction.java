@@ -1,4 +1,4 @@
-package Server;
+package Server.Log;
 
 public class Transaction {
     private int number;

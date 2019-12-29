@@ -1,4 +1,4 @@
-package Server;
+package Server.Log;
 
 import io.atomix.storage.journal.Indexed;
 import io.atomix.storage.journal.SegmentedJournal;

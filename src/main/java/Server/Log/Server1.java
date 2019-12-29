@@ -1,4 +1,4 @@
-package Server;
+package Server.Log;
 
 import Client.Request.Get;
 import Client.Request.Post;
@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-public class Server  extends Thread{
+public class Server1 extends Thread{
     private boolean coordinator;
     private Address addressCoordinator;
     private ExecutorService e;
@@ -28,7 +28,7 @@ public class Server  extends Thread{
     private int transaction;
 
 
-  public Server(String myPort,Address [] network) {
+  public Server1(String myPort, Address [] network) {
       this.myPort = Address.from("0.0.0.0", Integer.parseInt(myPort));
       this.network = network;
       log = new Log(myPort);
@@ -64,6 +64,7 @@ public class Server  extends Thread{
 
 
           ms.registerHandler("req", (a, b) -> {
+              /**
               Request request = s.decode(b);//  decode da mensagem
                   System.out.println("sou o servidor á escuta na porta : " + this.myPort + " e recebi " + request.getRequest() +" e tenho num transacao "+ this.transaction );
                   //Caso seja coordenador
@@ -78,7 +79,7 @@ public class Server  extends Thread{
                           ms.sendAsync(address, "transaction", s.encode(t));
                       }
 
-              }
+              }*/
           }, e);
 
 
@@ -126,7 +127,7 @@ public class Server  extends Thread{
                 Address.from("0.0.0.0",12348)
 
         };
-        new Server(args[0],network);
+        new Server1(args[0],network);
         Serializer s = new SerializerBuilder().build();
         ExecutorService es = Executors.newSingleThreadExecutor();
 
