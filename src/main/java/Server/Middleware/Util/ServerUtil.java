@@ -1,5 +1,8 @@
 package Server.Middleware.Util;
 
+import Client.Reply.GetLastTopicsReply;
+import Client.Reply.Reply;
+import Client.Request.*;
 import Server.Middleware.LeaderElection.ElectionMessage;
 import Server.Middleware.TotalOrder.Message;
 import Server.Middleware.TotalOrder.Token;
@@ -21,6 +24,15 @@ public class ServerUtil {
                 .addType(ElectionMessage.class)
                 .addType(Message.class)
                 .addType(Token.class)
+                .addType(GetLastTopicsReply.class)
+                .addType(Reply.class)
+                .addType(Get.class)
+                .addType(GetLastTopics.class)
+                .addType(Post.class)
+                .addType(Request.class)
+                .addType(SignIn.class)
+                .addType(Subscribe.class)
+                .addType(PostMessage.class)
                 .build();
     }
 }

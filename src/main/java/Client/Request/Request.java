@@ -12,6 +12,7 @@ public  class Request {
     private String username;
     private String password;
     private Address ip;
+    private int server_id;
 
     public Request(String username,String password){
         this.username = username;
@@ -23,6 +24,10 @@ public  class Request {
         this.ip = ip;
     }
 
+    public Address getIp() {
+        return ip;
+    }
+
     public  void setRequest(String request){
         this.request=request;
     }
@@ -32,5 +37,19 @@ public  class Request {
                 .thenRun(() -> {
                     System.out.println("Pedido enviado");
                 });
+    }
+
+    public String getUsername(){ return this.username; }
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public void setServer_id(int idp){
+        this.server_id = idp;
+    }
+
+    public int getServer_id(){
+        return this.server_id;
     }
 }

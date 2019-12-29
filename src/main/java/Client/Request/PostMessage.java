@@ -11,4 +11,12 @@ public class PostMessage extends Post {
         this.msg = msg;
         this.topics = list_tops;
     }
+
+    public Set<String> getTopics(){
+        return this.topics;
+    }
+
+    public String getMsg(){
+        return this.msg;
+    }
 }

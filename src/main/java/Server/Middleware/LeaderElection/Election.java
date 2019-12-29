@@ -71,7 +71,7 @@ public class Election {
     }
 
     public boolean haveLeader(){
-        return this.leader != null;
+        return this.leader != null && this.election_active == false;
     }
 
     public boolean isLeader(){

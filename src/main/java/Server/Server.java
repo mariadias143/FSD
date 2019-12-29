@@ -1,5 +1,9 @@
 package Server;
 
+import Client.Request.GetLastTopics;
+import Client.Request.Request;
+import Server.ServerLogic.CommunicationQueue;
+import Server.ServerLogic.Management;
 import io.atomix.utils.net.Address;
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.cluster.messaging.MessagingConfig;
@@ -45,7 +49,10 @@ public class Server {
         this.service = new ServerUtil(ms,e);
         this.idp = port - 12345;
         this.elector = new Election(idp,this.peers,service);
-        this.totalorder = new TotalOrderFixedSequencer(elector,service);
+
+        CommunicationQueue<Message> queue = new CommunicationQueue<>();
+
+        this.totalorder = new TotalOrderFixedSequencer(elector,service,queue);
         //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
 
         ms.registerHandler("msg",(a,b) ->{
@@ -53,7 +60,23 @@ public class Server {
             totalorder.send(m);
         },e);
 
+        ms.registerHandler("GET",(a,b)->{
+            Request r = this.service.s.decode(b);
+            r.setServer_id(idp);
+            r.setAddress(a);
+            Message<Request> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
+            this.totalorder.send(m);
+        },e);
 
+        ms.registerHandler("POST",(a,b)->{
+            Request r = this.service.s.decode(b);
+            r.setServer_id(idp);
+            r.setAddress(a);
+            Message<Request> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
+            this.totalorder.send(m);
+        },e);
+
+        new Thread(new Management(this.service,queue,this.idp)).start();
     }
 
     public static void main(String[] args) throws IOException {

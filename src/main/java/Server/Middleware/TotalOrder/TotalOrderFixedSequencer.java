@@ -1,5 +1,6 @@
 package Server.Middleware.TotalOrder;
 
+import Server.ServerLogic.CommunicationQueue;
 import io.atomix.utils.net.Address;
 import Server.Middleware.Util.*;
 import Server.Middleware.LeaderElection.*;
@@ -11,24 +12,26 @@ public class TotalOrderFixedSequencer {
     private int timestamp;
     private Queue<Message> messages_to_deliver;
     private Queue<Message> queue_to_send;
+    private CommunicationQueue<Message> operations_queue;
     private ServerUtil service;
     private Leader leader_middleware;
 
 
-    public TotalOrderFixedSequencer(Election e,ServerUtil service){
+    public TotalOrderFixedSequencer(Election e,ServerUtil service,CommunicationQueue queue){
         this.network = e;
         this.timestamp = 1;
         this.messages_to_deliver = new PriorityQueue<>();
         this.queue_to_send = new ArrayDeque<>();
         this.service = service;
         this.leader_middleware = new Leader(service,e.other_peers);
+        this.operations_queue = queue;
 
         service.ms.registerHandler("DELIVER",(a,b)->{
             Message m = this.service.s.decode(b);
             this.messages_to_deliver.add(m);
 
             List<Message> list = getMessagesReady();
-            list.forEach(message -> System.out.println(message.getData()));
+            list.forEach(message -> this.operations_queue.add(message));
 
         },this.service.e);
     }

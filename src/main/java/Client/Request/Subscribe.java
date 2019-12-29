@@ -9,4 +9,8 @@ public class Subscribe extends Post {
         super("POST",username,password);
         this.topics = list_tops;
     }
+
+    public Set<String> getTopics() {
+        return topics;
+    }
 }

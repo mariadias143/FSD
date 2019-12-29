@@ -3,17 +3,12 @@ package Client;
 import Client.Request.Get;
 import Client.Request.Post;
 import Client.Request.Request;
-import utils.Rep.GetTenPosts;
-import utils.Rep.Reply;
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.cluster.messaging.MessagingConfig;
 import io.atomix.cluster.messaging.impl.NettyMessagingService;
 import io.atomix.utils.net.Address;
 import io.atomix.utils.serializer.Serializer;
 import io.atomix.utils.serializer.SerializerBuilder;
-import utils.Req.GetMessage;
-import utils.Req.PostMessage;
-import utils.Req.Subscribe;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -50,6 +45,8 @@ public class Client {
 
     }
 
+    /**
+
     public void handlerInput(String input) {
         String[] header = input.split("/");
         switch (header[0]) {
@@ -78,6 +75,7 @@ public class Client {
         post.sender(ms, forwarderAddress, s);
     }
 
+     */
 
     public static void main(String[] args) throws Exception {
 
@@ -86,7 +84,7 @@ public class Client {
         String input;
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         while ((input = in.readLine()) != null) {
-            client.handlerInput(input);
+            //client.handlerInput(input);
 
         /*
             GET/messages

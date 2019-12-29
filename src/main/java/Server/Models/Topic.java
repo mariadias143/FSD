@@ -8,19 +8,19 @@ import org.apache.commons.collections4.queue.*;
 
 public class Topic {
     private String name;
-    private Queue<String> posts;
+    private Queue<Tuple<Integer,String>> posts;
 
     public Topic(String name){
         this.name = name;
-        this.posts = new CircularFifoQueue<String>(10);
+        this.posts = new CircularFifoQueue<Tuple<Integer,String>>(10);
     }
 
-    public void post(String post){
-        this.posts.add(post);
+    public void post(String post,int timestamp){
+        this.posts.add(new Tuple<>(timestamp,post));
     }
 
-    public List<String> getPosts(){
-        List<String> list = this.posts.stream().collect(Collectors.toList());
+    public List<Tuple<Integer,String>> getPosts(){
+        List<Tuple<Integer,String>> list = this.posts.stream().collect(Collectors.toList());
 
         return list;
     }
