@@ -3,12 +3,14 @@ package Client;
 import Client.Request.Get;
 import Client.Request.Post;
 import Client.Request.Request;
+
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.cluster.messaging.MessagingConfig;
 import io.atomix.cluster.messaging.impl.NettyMessagingService;
 import io.atomix.utils.net.Address;
 import io.atomix.utils.serializer.Serializer;
 import io.atomix.utils.serializer.SerializerBuilder;
+
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -22,15 +24,21 @@ import java.util.concurrent.Executors;
 
 
 public class Client {
+
     private final Address myAddress;
     private final Address forwarderAddress;
     private final ManagedMessagingService ms;
     private final Serializer s;
     private ExecutorService e;
+    private String username;
+    private String password;
 
-    public Client(String myAddress, String forwarderAddress) {
-        this.myAddress = new Address("0.0.0.0", Integer.parseInt(myAddress));
-        this.forwarderAddress = new Address("0.0.0.0", Integer.parseInt(forwarderAddress));
+    public Client(String myAddress, String serverAddress,String username,String password) {
+
+        this.myAddress = Address.from(myAddress);
+        this.forwarderAddress = Address.from(serverAddress);
+        this.username=username;
+        this.password=password;
 
         this.e = Executors.newFixedThreadPool(1);
         this.ms = new NettyMessagingService(
@@ -38,6 +46,7 @@ public class Client {
                 this.myAddress,
                 new MessagingConfig());
         ms.start();
+
         this.s = new SerializerBuilder()
                 .withTypes(Request.class, Get.class, Post.class)
                 .build();
@@ -56,8 +65,7 @@ public class Client {
             case "POST":
                 sendPOST(input);
                 break;
-
-        }
+      }
 
     }
 
@@ -79,10 +87,20 @@ public class Client {
 
     public static void main(String[] args) throws Exception {
 
-        Client client = new Client(args[0], args[1]);
-
         String input;
+        String username;
+        String password;
+
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.println("Username: ");
+        username = in.readLine();
+        System.out.println("Password: ");
+        password= in.readLine();
+
+        Client client = new Client(args[0], args[1],username,password);
+
+
         while ((input = in.readLine()) != null) {
             //client.handlerInput(input);
 
