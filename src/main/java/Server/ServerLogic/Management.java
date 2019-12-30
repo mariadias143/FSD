@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class Management implements Runnable {
     private ServerUtil service;
-    private CommunicationQueue<Message<Request>> requests;
+    private CommunicationQueue<Message<RequestsI>> requests;
     private int process_id;
     private Map<String, Topic> topics;
     private Map<String, User> users;
@@ -34,13 +34,15 @@ public class Management implements Runnable {
 
         try{
             while (true){
-                Message<Request> r = requests.get();
+                Message<RequestsI> msg = requests.get();
 
-                if (r.getData() instanceof Get){
-                    handleReads(r.getData());
+                RequestsI r = msg.getData();
+
+                if (r.findType().equals("GET")){
+                    handleReads(r);
                 }
                 else{
-                    handleWrites(r.getData(),r.getTimestamp());
+                    handleWrites(r,msg.getTimestamp());
                 }
             }
         }
@@ -50,8 +52,9 @@ public class Management implements Runnable {
 
     }
 
-    public void handleWrites(Request r,int timestamp){
-        String object = r.getClass().getSimpleName();
+    public void handleWrites(RequestsI r,int timestamp){
+        String object = r.findClass();
+        System.out.println(object);
 
         switch (object){
             case "PostMessage":{
@@ -59,7 +62,7 @@ public class Management implements Runnable {
                 if (!authentication(r.getUsername(),r.getPassword())){
                     if (r.getServer_id() == this.process_id){
                         Reply reply = new WriteReply(1);
-                        reply.reply(this.service.ms,r.getIp(),this.service.s);
+                        reply.reply(this.service.ms,r.getAddress(),this.service.s);
                     }
                     return;
                 }
@@ -76,7 +79,7 @@ public class Management implements Runnable {
                 if (!authentication(r.getUsername(),r.getPassword())){
                     if (r.getServer_id() == this.process_id){
                         Reply reply = new WriteReply(1);
-                        reply.reply(this.service.ms,r.getIp(),this.service.s);
+                        reply.reply(this.service.ms,r.getAddress(),this.service.s);
                     }
                     return;
                 }
@@ -85,11 +88,12 @@ public class Management implements Runnable {
                 break;
             }
             default:
+                System.out.println("Request não encontrou em nenhum caso WRITES - Management");
                 break;
         }
     }
 
-    private void handleSubscribe(Request r){
+    private void handleSubscribe(RequestsI r){
         Subscribe subs = (Subscribe) r;
 
         User u = this.users.get(r.getUsername());
@@ -97,16 +101,16 @@ public class Management implements Runnable {
 
         if (r.getServer_id() == this.process_id) {
             Reply reply = new WriteReply();
-            reply.reply(this.service.ms, r.getIp(), this.service.s);
+            reply.reply(this.service.ms, r.getAddress(), this.service.s);
         }
     }
 
-    private void handleSignIn(Request r){
+    private void handleSignIn(RequestsI r){
         Reply reply;
         if (this.users.containsKey(r.getUsername())){
             if (r.getServer_id() == this.process_id) {
                 reply = new  WriteReply(2);
-                reply.reply(this.service.ms,r.getIp(),this.service.s);
+                reply.reply(this.service.ms,r.getAddress(),this.service.s);
             }
             return;
         }
@@ -115,12 +119,13 @@ public class Management implements Runnable {
         this.users.put(r.getUsername(),u);
 
         if (r.getServer_id() == this.process_id) {
+
             reply = new WriteReply();
-            reply.reply(this.service.ms, r.getIp(), this.service.s);
+            reply.reply(this.service.ms, r.getAddress(), this.service.s);
         }
     }
 
-    private void handlePostMessage(Request r,int timestamp){
+    private void handlePostMessage(RequestsI r,int timestamp){
         PostMessage pst = (PostMessage) r;
 
         for(String topic : pst.getTopics()){
@@ -135,13 +140,13 @@ public class Management implements Runnable {
 
         if (r.getServer_id() == this.process_id){
             Reply reply = new WriteReply();
-            reply.reply(this.service.ms,r.getIp(),this.service.s);
+            reply.reply(this.service.ms,r.getAddress(),this.service.s);
         }
     }
 
 
-    private void handleReads(Request r){
-        String object = r.getClass().getSimpleName();
+    private void handleReads(RequestsI r){
+        String object = r.findClass();
 
         if (r.getServer_id() != this.process_id)
             return;
@@ -152,6 +157,7 @@ public class Management implements Runnable {
                 break;
             }
             default:
+                System.out.println("Request não encontrou em nenhum caso READS - Management");
                 break;
         }
 
@@ -168,9 +174,10 @@ public class Management implements Runnable {
             List<Tuple<Integer,String>> queryTosort = new ArrayList<>();
 
             for(String key : topics){
-                List<Tuple<Integer,String>> posts = this.topics.get(key).getPosts();
-
-                queryTosort.addAll(posts);
+                if (this.topics.containsKey(key)){
+                    List<Tuple<Integer,String>> posts = this.topics.get(key).getPosts();
+                    queryTosort.addAll(posts);
+                }
             }
 
             queryTosort.sort((left,right) -> right.getFirst() - left.getFirst());
@@ -182,7 +189,7 @@ public class Management implements Runnable {
             reply = new GetLastTopicsReply(top10msg);
         }
 
-        reply.reply(this.service.ms,request.getIp(),this.service.s);
+        reply.reply(this.service.ms,request.getAddress(),this.service.s);
     }
 
     private boolean authentication(String username,String password){
@@ -193,5 +200,20 @@ public class Management implements Runnable {
         User u = users.get(username);
 
         return u.verifyCredencials(username,password);
+    }
+
+    public String toString(){
+        synchronized (this){
+            StringBuilder st = new StringBuilder();
+            st.append("Topics:\n");
+            for(Topic t : this.topics.values())
+                st.append(t.toString());
+
+            st.append("Users:\n");
+            for(User u : this.users.values())
+                st.append(u.toString());
+
+            return st.toString();
+        }
     }
 }

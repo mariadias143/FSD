@@ -2,6 +2,8 @@ package Server;
 
 import Client.Request.GetLastTopics;
 import Client.Request.Request;
+import Client.Request.RequestsI;
+import Client.Request.SignIn;
 import Server.ServerLogic.CommunicationQueue;
 import Server.ServerLogic.Management;
 import io.atomix.utils.net.Address;
@@ -30,6 +32,7 @@ public class Server {
     public Election elector;
     public ServerUtil service;
     public TotalOrderFixedSequencer totalorder;
+    public Management man;
 
     public Server(int port,int number_of_peers){
         this.port = port;
@@ -61,22 +64,33 @@ public class Server {
         },e);
 
         ms.registerHandler("GET",(a,b)->{
-            Request r = this.service.s.decode(b);
+            RequestsI r = this.service.s.decode(b);
             r.setServer_id(idp);
-            r.setAddress(a);
-            Message<Request> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
+            r.setAddress(Address.from(a.port()));
+            Message<RequestsI> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
             this.totalorder.send(m);
         },e);
 
         ms.registerHandler("POST",(a,b)->{
-            Request r = this.service.s.decode(b);
+            RequestsI r = this.service.s.decode(b);
+            System.out.println("Passou no decode");
             r.setServer_id(idp);
-            r.setAddress(a);
-            Message<Request> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
+            r.setAddress(Address.from(a.port()));
+            Message<RequestsI> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
             this.totalorder.send(m);
         },e);
 
-        new Thread(new Management(this.service,queue,this.idp)).start();
+        ms.registerHandler("TESTE",(a,b)->{
+            System.out.println(man.toString());
+        },e);
+
+        man = new Management(this.service,queue,this.idp);
+
+        new Thread(man).start();
+
+        if (idp == 0){
+            this.elector.init_election();
+        }
     }
 
     public static void main(String[] args) throws IOException {

@@ -7,12 +7,14 @@ import io.atomix.utils.serializer.Serializer;
 
 import java.util.List;
 
-public  class Request {
+public class Request {
     private String request;
     private String username;
     private String password;
     private Address ip;
     private int server_id;
+    private String r_class;
+    private String r_type;
 
     public Request(String username,String password){
         this.username = username;
@@ -51,5 +53,18 @@ public  class Request {
 
     public int getServer_id(){
         return this.server_id;
+    }
+
+    public void setClasses(String classe,String type){
+        this.r_class = classe;
+        this.r_type = type;
+    }
+
+    public String findClass(){
+        return r_class;
+    }
+
+    public String findType(){
+        return r_type;
     }
 }

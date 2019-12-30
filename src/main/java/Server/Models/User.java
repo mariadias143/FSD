@@ -35,4 +35,18 @@ public class User {
     public List<String> getSubscribed(){
         return this.subscribed.stream().collect(Collectors.toList());
     }
+
+    public String toString(){
+        StringBuilder st = new StringBuilder();
+
+        st.append("Username: " + username + "\n");
+        st.append("Password: " + password + "\n");
+        st.append("Topics:");
+
+        for(String topic : this.subscribed)
+            st.append(" " + topic + ";");
+        st.append("\n");
+
+        return st.toString();
+    }
 }

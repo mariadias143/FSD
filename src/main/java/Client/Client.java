@@ -1,7 +1,5 @@
 package Client;
 
-import Client.Request.Get;
-import Client.Request.Post;
 import Client.Request.Request;
 
 import io.atomix.cluster.messaging.ManagedMessagingService;
@@ -14,8 +12,6 @@ import io.atomix.utils.serializer.SerializerBuilder;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,7 +44,7 @@ public class Client {
         ms.start();
 
         this.s = new SerializerBuilder()
-                .withTypes(Request.class, Get.class, Post.class)
+                //.withTypes(Request.class, Get.class, Post.class)
                 .build();
 
 

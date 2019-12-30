@@ -24,4 +24,17 @@ public class Topic {
 
         return list;
     }
+
+    public String toString(){
+        StringBuilder st = new StringBuilder();
+        st.append("Name: " + name + "\n");
+        st.append("Posts:\n");
+
+        for(Tuple<Integer,String> tuple : this.posts){
+            st.append("Timestamp: " + tuple.getFirst() + " ");
+            st.append("MSG: " + tuple.getSecond() + "\n");
+        }
+
+        return st.toString();
+    }
 }
