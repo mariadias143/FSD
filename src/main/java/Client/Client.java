@@ -1,11 +1,14 @@
 package Client;
 
 
+import Client.Reply.Reply;
 import Client.Request.Request;
 import Client.Presentation.ClientUI;
 import Client.Request.*;
 
 
+import Server.Middleware.TotalOrder.Message;
+import Server.Middleware.Util.ServerUtil;
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.cluster.messaging.MessagingConfig;
 import io.atomix.cluster.messaging.impl.NettyMessagingService;
@@ -22,36 +25,37 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-
-
+import java.util.concurrent.ScheduledExecutorService;
 
 
 public class Client {
 
     private final Address myAddress;
     private final Address forwarderAddress;
-    private final ManagedMessagingService ms;
-    private final Serializer s;
-    private ExecutorService e;
+    private ServerUtil service;
     private String username;
     private String password;
 
-    public Client(String myAddress, String serverAddress) {
+    public Client(Integer myAddress, Integer serverAddress) {
 
         this.myAddress = Address.from(myAddress);
         this.forwarderAddress = Address.from(serverAddress);
 
-        this.e = Executors.newFixedThreadPool(1);
-        this.ms = new NettyMessagingService(
-                "Client",
-                this.myAddress,
+        ScheduledExecutorService e = Executors.newScheduledThreadPool(1);
+
+        ManagedMessagingService ms = new NettyMessagingService("Client",
+                Address.from(myAddress),
                 new MessagingConfig());
+
         ms.start();
 
-        this.s = new SerializerBuilder()
-                //.withTypes(Request.class, Get.class, Post.class)
-                .build();
+
+        this.service= new ServerUtil(ms,e);
+
+        ms.registerHandler("REP",(a,b)->{
+            Reply rep = service.s.decode(b);
+            rep.printContent();
+        },e);
 
 
     }
@@ -65,8 +69,8 @@ public class Client {
     }
 
     public void register (String username, String password) {
-        Request request = new SignIn(username,password);
-        request.sender(ms, forwarderAddress, s);
+        RequestsI request = new SignIn(username,password);
+        request.send(service.ms, forwarderAddress, service.s);
 
     }
 
@@ -77,16 +81,17 @@ public class Client {
 
     public void getMessages(){
         if(verifyCredentials()){
-            Request request = new GetLastTopics(this.username,this.password);
-            request.sender(ms,forwarderAddress,s);
+            RequestsI request = new GetLastTopics(this.username,this.password);
+            request.send(service.ms,forwarderAddress,service.s);
         }
+        else
         System.out.println("Falta fazer SetUp");
     }
 
     public void postMessage(Set<String> topics, String message) {
         if (verifyCredentials()) {
-            Request request = new PostMessage(this.username, this.password, message, topics);
-            request.sender(ms,forwarderAddress,s);
+            RequestsI request = new PostMessage(this.username, this.password, message, topics);
+            request.send(service.ms,forwarderAddress,service.s);
         }
         else
             System.out.println("Falta fazer SetUp");
@@ -95,8 +100,8 @@ public class Client {
 
     public void postTopics (Set<String> topics) {
         if (verifyCredentials()) {
-            Request request = new Subscribe(this.username, this.password, topics);
-            request.sender(ms, forwarderAddress, s);
+            RequestsI request = new Subscribe(this.username, this.password, topics);
+            request.send(service.ms, forwarderAddress, service.s);
         }
         else
             System.out.println("Falta fazer SetUp");
@@ -105,14 +110,18 @@ public class Client {
 
 
     public void shutdown(){
-        this.ms.stop();
+        this.service.ms.stop();
+        this.service.e.shutdown();
     }
 
 
     public static void main(String[] args) throws Exception {
 
         int option;
-        Client client = new Client(args[0], args[1]);
+        int myport = Integer.parseInt(args[0]);
+        int serverPort = Integer.parseInt(args[1]);
+
+        Client client = new Client(myport, serverPort);
 
         ClientUI clientUI = new ClientUI(client);
 
