@@ -1,8 +1,7 @@
 package Client;
 
-import Client.Request.Get;
-import Client.Request.Post;
-import Client.Request.Request;
+import Client.Presentation.ClientUI;
+import Client.Request.*;
 
 import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.cluster.messaging.MessagingConfig;
@@ -16,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,12 +33,10 @@ public class Client {
     private String username;
     private String password;
 
-    public Client(String myAddress, String serverAddress,String username,String password) {
+    public Client(String myAddress, String serverAddress) {
 
         this.myAddress = Address.from(myAddress);
         this.forwarderAddress = Address.from(serverAddress);
-        this.username=username;
-        this.password=password;
 
         this.e = Executors.newFixedThreadPool(1);
         this.ms = new NettyMessagingService(
@@ -54,63 +52,76 @@ public class Client {
 
     }
 
-    /**
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-    public void handlerInput(String input) {
-        String[] header = input.split("/");
-        switch (header[0]) {
-            case "GET":
-                sendGET(input);
-                break;
-            case "POST":
-                sendPOST(input);
-                break;
-      }
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void register (String username, String password) {
+        Request request = new SignIn(username,password);
+        request.sender(ms, forwarderAddress, s);
+
+    }
+
+    public boolean verifyCredentials(){
+        return this.username != null && this.password!=null;
+    }
+
+
+    public void getMessages(){
+        if(verifyCredentials()){
+            Request request = new GetLastTopics(this.username,this.password);
+            request.sender(ms,forwarderAddress,s);
+        }
+        System.out.println("Falta fazer SetUp");
+    }
+
+    public void postMessage(Set<String> topics, String message) {
+        if (verifyCredentials()) {
+            Request request = new PostMessage(this.username, this.password, message, topics);
+            request.sender(ms,forwarderAddress,s);
+        }
+        else
+            System.out.println("Falta fazer SetUp");
+
+    }
+
+    public void postTopics (Set<String> topics) {
+        if (verifyCredentials()) {
+            Request request = new Subscribe(this.username, this.password, topics);
+            request.sender(ms, forwarderAddress, s);
+        }
+        else
+            System.out.println("Falta fazer SetUp");
 
     }
 
 
-    public void sendGET(String request) {
-        Request get = new Get(request);
-        System.out.println(forwarderAddress);
-        get.sender(ms, forwarderAddress, s);
+    public void shutdown(){
+        this.ms.stop();
     }
 
-
-    public void sendPOST(String request) {
-        Request post = new Post(request);
-        System.out.println(forwarderAddress);
-        post.sender(ms, forwarderAddress, s);
-    }
-
-     */
 
     public static void main(String[] args) throws Exception {
 
-        String input;
-        String username;
-        String password;
+        int option;
+        Client client = new Client(args[0], args[1]);
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        ClientUI clientUI = new ClientUI(client);
 
-        System.out.println("Username: ");
-        username = in.readLine();
-        System.out.println("Password: ");
-        password= in.readLine();
+        while(true) {
+            clientUI.showMenuInicial();
+            option = clientUI.read_menu_output();
+            if(option==0) {
+                client.shutdown();
+                break;
 
-        Client client = new Client(args[0], args[1],username,password);
-
-
-        while ((input = in.readLine()) != null) {
-            //client.handlerInput(input);
-
-        /*
-            GET/messages
-            POST/message/topic/text
-            POST/subscribe/topic
-         */
-
-
+            }
         }
     }
+
 }
+
