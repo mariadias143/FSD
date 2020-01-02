@@ -59,7 +59,7 @@ public class Client {
         ms.registerHandler("REP",(a,b)->{
             Reply rep = service.s.decode(b);
             rep.printContent();
-            block.setWait(false);
+            block.awake();
 
 
         },e);
@@ -78,7 +78,7 @@ public class Client {
     public void register (String username, String password) {
         RequestsI request = new SignIn(username,password);
         request.send(service.ms, forwarderAddress, service.s);
-        block.setWait(true);
+        block.setWait();
 
     }
 
@@ -91,7 +91,7 @@ public class Client {
         if(verifyCredentials()){
             RequestsI request = new GetLastTopics(this.username,this.password);
             request.send(service.ms,forwarderAddress,service.s);
-            block.setWait(true);
+            block.setWait();
         }
         else
         System.out.println("Falta fazer SetUp");
@@ -101,7 +101,7 @@ public class Client {
         if (verifyCredentials()) {
             RequestsI request = new PostMessage(this.username, this.password, message, topics);
             request.send(service.ms,forwarderAddress,service.s);
-            block.setWait(true);
+            block.setWait();
         }
         else
             System.out.println("Falta fazer SetUp");
@@ -112,7 +112,7 @@ public class Client {
         if (verifyCredentials()) {
             RequestsI request = new Subscribe(this.username, this.password, topics);
             request.send(service.ms, forwarderAddress, service.s);
-            block.setWait(true);
+            block.setWait();
         }
         else
             System.out.println("Falta fazer SetUp");

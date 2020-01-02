@@ -12,32 +12,29 @@ public class Block {
         this.wait = false;
     }
 
-    public boolean isWait() {
-        lock.lock();
-        try {
-            return wait;
-        }finally {
+    public void awake(){
+        try{
+            lock.lock();
+            this.wait = false;
+            c.signalAll();
+        }
+        finally {
             lock.unlock();
         }
-
-
     }
 
-    public void setWait(boolean wait) {
-        lock.lock();
+    public void setWait() {
         try {
-            this.wait = wait;
-            if(!this.wait)
-                c.signal();
-            else
-                c.await();
+            lock.lock();
+            this.wait = true;
+            while (this.wait)
+                this.c.await();
 
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             lock.unlock();
         }
-
     }
 
 }

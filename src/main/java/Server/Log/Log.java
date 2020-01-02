@@ -1,6 +1,7 @@
 package Server.Log;
 
 import Server.Middleware.TotalOrder.Message;
+import Server.Middleware.Util.ServerUtil;
 import io.atomix.storage.journal.Indexed;
 import io.atomix.storage.journal.SegmentedJournal;
 import io.atomix.storage.journal.SegmentedJournalReader;
@@ -15,63 +16,66 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class Log {
-    private Message message;
-    private Set <Character> state;
+    private Transaction transaction;
+    private ArrayList <String> state;
     private SegmentedJournal privateLog;
     private Serializer s;
 
 
-    public Log(String myPort){
-        s = new SerializerBuilder().build();
+    public Log(String myPort, ServerUtil service){
+        s = service.s;
         privateLog = SegmentedJournal.<String>builder()
                 .withName(myPort + "Log")
                 .withSerializer(s)
                 .build();
 
-        this.state=new HashSet<>();
+        this.state=new ArrayList<>();
     }
 
-    public void addState(char state) {
-        this.state.add(state);
-        if(state=='A'){
+
+    public void addState(String state, Transaction t) {
+        this.transaction = t;
+        SegmentedJournalWriter<Object> w = privateLog.writer();
+        this.transaction.addState(state);
+        w.append(this.transaction);
+
+        CompletableFuture.supplyAsync(()->{w.flush();return null;});
+
+        if(state.equals("A")){
             resetLog();
         }
 
     }
 
-    public void setMessage(Message message,char state) {
-        this.message=message;
-        this.addState(state);
+    public void setMessage(Transaction t,String state) {
+        this.transaction=t;
+        this.addState(state,t);
     }
 
     public void resetLog(){
-        this.message=null;
-        this.state= new HashSet<>();
-
+        this.transaction=null;
+        this.state= new ArrayList<>();
     }
 
 
-
-    public void commit(){
-        addState('C');
-
-        SegmentedJournalWriter<String> w = privateLog.writer();
-        w.append("messagem");
+    public void commit(Transaction t){
+        addState("C",t);
+        SegmentedJournalWriter<Object> w = privateLog.writer();
+        this.transaction.setState(this.state);
+        w.append(this.transaction);
         CompletableFuture.supplyAsync(()->{w.flush();return null;})
                 .thenRun(()->{
-                    w.close();
                     System.out.println("ESCREVI NO log");
                 });
-
     }
 
-    public List<String> read(){
-        List<String> state= new ArrayList<>();
-        SegmentedJournalReader<String> r = privateLog.openReader(0);
+    public List<Transaction> read(){
+        List<Transaction> state= new ArrayList<>();
+        SegmentedJournalReader<Transaction> r = privateLog.openReader(0);
         while(r.hasNext()) {
-            Indexed<String> e = r.next();
+            Indexed<Transaction> e = r.next();
             System.out.println(e.index()+": "+e.entry());
-            state.add(e.index()+": "+e.entry());
+            state.add(e.entry());
         }
         r.close();
         return state;

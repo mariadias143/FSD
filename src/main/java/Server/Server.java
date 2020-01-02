@@ -4,6 +4,9 @@ import Client.Request.GetLastTopics;
 import Client.Request.Request;
 import Client.Request.RequestsI;
 import Client.Request.SignIn;
+import Server.Log.LeaderLog;
+import Server.Log.Slaves;
+import Server.Middleware.Persistency.Persistency;
 import Server.ServerLogic.CommunicationQueue;
 import Server.ServerLogic.Management;
 import io.atomix.utils.net.Address;
@@ -33,6 +36,7 @@ public class Server {
     public ServerUtil service;
     public TotalOrderFixedSequencer totalorder;
     public Management man;
+    public Persistency persistency;
 
     public Server(int port,int number_of_peers){
         this.port = port;
@@ -53,9 +57,17 @@ public class Server {
         this.idp = port - 12345;
         this.elector = new Election(idp,this.peers,service);
 
-        CommunicationQueue<Message> queue = new CommunicationQueue<>();
+        CommunicationQueue<Message<RequestsI>> totalorder_to_persist = new CommunicationQueue<>();
+        CommunicationQueue<Message<RequestsI>> persist_to_delivery = new CommunicationQueue<>();
 
-        this.totalorder = new TotalOrderFixedSequencer(elector,service,queue);
+
+        this.totalorder = new TotalOrderFixedSequencer(elector,service,totalorder_to_persist);
+        this.persistency = new Persistency(
+                persist_to_delivery,
+                totalorder_to_persist,
+                new LeaderLog(String.valueOf(port), this.peers,this.service),
+                new Slaves(String.valueOf(port),this.peers,elector,service),
+                elector);
         //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
 
         ms.registerHandler("msg",(a,b) ->{
@@ -84,9 +96,10 @@ public class Server {
             System.out.println(man.toString());
         },e);
 
-        man = new Management(this.service,queue,this.idp);
+        man = new Management(this.service,persist_to_delivery,this.idp);
 
         new Thread(man).start();
+        new Thread(persistency).start();
 
         if (idp == 0){
             this.elector.init_election();
