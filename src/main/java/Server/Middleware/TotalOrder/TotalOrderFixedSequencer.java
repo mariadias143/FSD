@@ -7,7 +7,7 @@ import Server.Middleware.LeaderElection.*;
 
 import java.util.*;
 
-public class TotalOrderFixedSequencer {
+public class TotalOrderFixedSequencer implements Ordering {
     private Election network;
     private int timestamp;
     private Queue<Message> messages_to_deliver;

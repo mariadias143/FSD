@@ -7,7 +7,7 @@ import Server.Middleware.LeaderElection.*;
 
 import java.util.*;
 
-public class TotalOrderMovingSequencer {
+public class TotalOrderMovingSequencer implements Ordering {
     private Address[] other_peers;
     private int timestamp;
     private Queue<Message> messages_to_deliver;
@@ -16,6 +16,7 @@ public class TotalOrderMovingSequencer {
     private Sequencer seq;
     private Address[] seq_addresses;
     private int n_messages_sent;
+    private int idp;
 
     public TotalOrderMovingSequencer(Address[] other_peers, ServerUtil service, int id, Address[] sequencers,Map<Integer,Boolean> peer_status, CommunicationQueue queue){
         this.other_peers = other_peers;
@@ -25,6 +26,7 @@ public class TotalOrderMovingSequencer {
         this.seq_addresses = sequencers;
         this.operations_queue = queue;
         this.n_messages_sent = 0;
+        this.idp = id;
 
         if (peer_status.get(id) == true)
             this.seq = new Sequencer(service,other_peers,sequencers,id);
@@ -33,7 +35,6 @@ public class TotalOrderMovingSequencer {
         service.ms.registerHandler("DELIVER",(a,b)->{
             Message m = this.service.s.decode(b);
             this.messages_to_deliver.add(m);
-            System.out.println("Adicionei uma msg");
 
             List<Message> list = getMessagesReady();
             list.forEach(message -> this.operations_queue.add(message));
@@ -65,7 +66,8 @@ public class TotalOrderMovingSequencer {
     }
 
 
-    public void send(Message m,int port){
+    public void send(Message m){
+        int port = 12345 + this.idp;
         m.setId("MSG-" + port + "-" + n_messages_sent);
         this.n_messages_sent++;
 

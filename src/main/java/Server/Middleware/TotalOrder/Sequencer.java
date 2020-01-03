@@ -28,7 +28,13 @@ public class Sequencer {
             },this.service.e);
 
             this.service.ms.registerHandler("TOKEN",(a,b)->{
-                Token t = this.service.s.decode(b);
+                Token t = null;
+                try {
+                    t = this.service.s.decode(b);
+                }
+                catch (Exception ee){
+                    ee.printStackTrace();
+                }
 
                 try{
                     Iterator it = this.messages_to_send.iterator();

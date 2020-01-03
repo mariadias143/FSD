@@ -64,7 +64,7 @@ public class Bot {
         },e);
 
 
-        int id = port - 12348;
+        int id = port - 12349;
 
         System.out.println("Sou o " + id + " envio para" + add.toString());
         System.out.println("Porta: " + ms.address());
@@ -88,6 +88,7 @@ public class Bot {
                 Address.from(12345),
                 Address.from(12346),
                 Address.from(12347),
+                Address.from(12348),
         };
 
         new Thread(()->{

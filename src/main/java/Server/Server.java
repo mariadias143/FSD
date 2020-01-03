@@ -1,7 +1,6 @@
 package Server;
 
 import Client.Request.GetLastTopics;
-import Client.Request.Request;
 import Client.Request.RequestsI;
 import Client.Request.SignIn;
 import Server.Log.LeaderLog;
@@ -36,12 +35,13 @@ public class Server {
     public int idp;
     public Election elector;
     public ServerUtil service;
-    public TotalOrderFixedSequencer totalorder;
+    //public TotalOrderFixedSequencer totalorder;
     //public TotalOrderMovingSequencer totalorder;
+    public Ordering totalorder;
     public Management man;
     public Persistency persistency;
 
-    public Server(int port,int number_of_peers){
+    public Server(int port,int number_of_peers,boolean moving){
         this.port = port;
         this.peers = new Address[number_of_peers];
 
@@ -66,8 +66,20 @@ public class Server {
 
         //this.totalorder = new TotalOrderFixedSequencer(elector,service,queue);
         //this.totalorder = new TotalOrderMovingSequencer(peers,service,idp,this.buildSeqs(2),discoverSequencers(2,number_of_peers),queue);
+        int n_seqs = number_of_peers / 2;
+        if (moving){
+            this.totalorder = new TotalOrderMovingSequencer(
+                    peers,
+                    service,
+                    idp,
+                    this.buildSeqs(n_seqs),
+                    discoverSequencers(n_seqs,number_of_peers),
+                    totalorder_to_persist);
+        }
+        else {
+            this.totalorder = new TotalOrderFixedSequencer(elector,service,totalorder_to_persist);
+        }
 
-        this.totalorder = new TotalOrderFixedSequencer(elector,service,totalorder_to_persist);
         this.persistency = new Persistency(
                 persist_to_delivery,
                 totalorder_to_persist,
@@ -75,14 +87,13 @@ public class Server {
                 new Slaves(String.valueOf(port),this.peers,elector,service),
                 elector);
 
-        //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
 
         ms.registerHandler("GET",(a,b)->{
             RequestsI r = this.service.s.decode(b);
             r.setServer_id(idp);
             r.setAddress(Address.from(a.port()));
             Message<RequestsI> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
-            this.totalorder.send(m,this.port);
+            this.totalorder.send(m);
         },e);
 
         ms.registerHandler("POST",(a,b)->{
@@ -99,8 +110,8 @@ public class Server {
             System.out.println("Passou no decode");
             r.setServer_id(idp);
             r.setAddress(Address.from(a.port()));
-            Message<RequestsI> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
-            this.totalorder.send(m,this.port);
+            Message<RequestsI> m = new Message<>("",0,r);
+            this.totalorder.send(m);
         },e);
 
         ms.registerHandler("TESTE",(a,b)->{
@@ -142,19 +153,8 @@ public class Server {
     public static void main(String[] args) throws IOException {
         int port = Integer.parseInt(args[0]);
         int n_peers = Integer.parseInt(args[1]);
+        boolean moving = Boolean.parseBoolean(args[2]);
 
-        Server twitter = new Server(port,n_peers);
-
-        //Election elector = new Election(idp,chat.peers,new ServerUtil(ms,e));
-
-        //TotalOrderFixedSequencer totalorder = new TotalOrderFixedSequencer(elector,new ServerUtil(ms,e));
-        //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
-
-        /**
-        if(idp == 0){
-            Scanner asc = new Scanner(System.in);
-            asc.nextLine();
-            elector.init_election();
-        }*/
+        Server twitter = new Server(port,n_peers,moving);
     }
 }
