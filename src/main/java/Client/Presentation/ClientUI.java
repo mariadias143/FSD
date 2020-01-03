@@ -24,6 +24,10 @@ public class ClientUI extends Thread {
 
     public void run(){
         int option;
+        System.out.println("Qual a porta do servidor que se quer conetar");
+        option = this.readOpt();
+        client.setForwarderAddress(option);
+
         while (true) {
             showMenuInicial();
             option = read_menu_output();

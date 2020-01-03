@@ -33,16 +33,15 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Client {
 
     private final Address myAddress;
-    private final Address forwarderAddress;
+    private Address forwarderAddress;
     private ServerUtil service;
     private String username;
     private String password;
     private Block block;
 
-    public Client(Integer myAddress, Integer serverAddress, Block block) {
+    public Client(Integer myAddress, Block block) {
 
         this.myAddress = Address.from(myAddress);
-        this.forwarderAddress = Address.from(serverAddress);
         this.block=block;
 
         ScheduledExecutorService e = Executors.newScheduledThreadPool(1);
@@ -65,6 +64,10 @@ public class Client {
         },e);
 
 
+    }
+
+    public void setForwarderAddress(int portServer){
+        this.forwarderAddress= Address.from(portServer);
     }
 
     public void setUsername(String username) {
@@ -129,10 +132,11 @@ public class Client {
     public static void main(String[] args) throws Exception {
 
         int myport = Integer.parseInt(args[0]);
-        int serverPort = Integer.parseInt(args[1]);
+
+
 
         Block block = new Block();
-        Client client = new Client(myport, serverPort, block);
+        Client client = new Client(myport,block);
 
         ClientUI clientUI = new ClientUI(client, block);
 
