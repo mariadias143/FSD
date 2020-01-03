@@ -67,30 +67,24 @@ public class Server {
         //this.totalorder = new TotalOrderFixedSequencer(elector,service,queue);
         //this.totalorder = new TotalOrderMovingSequencer(peers,service,idp,this.buildSeqs(2),discoverSequencers(2,number_of_peers),queue);
         int n_seqs = number_of_peers / 2;
-
-        ServerUtil s_util_totalorder = new ServerUtil(ms,(ScheduledExecutorService) Executors.newScheduledThreadPool(1));
-
         if (moving){
             this.totalorder = new TotalOrderMovingSequencer(
                     peers,
-                    s_util_totalorder,
+                    service,
                     idp,
                     this.buildSeqs(n_seqs),
                     discoverSequencers(n_seqs,number_of_peers),
                     totalorder_to_persist);
         }
         else {
-            this.totalorder = new TotalOrderFixedSequencer(elector,s_util_totalorder,totalorder_to_persist);
+            this.totalorder = new TotalOrderFixedSequencer(elector,service,totalorder_to_persist);
         }
-
-
-        ServerUtil s_util_persistency = new ServerUtil(ms,(ScheduledExecutorService) Executors.newScheduledThreadPool(1));
 
         this.persistency = new Persistency(
                 persist_to_delivery,
                 totalorder_to_persist,
-                new LeaderLog(String.valueOf(port), this.peers,s_util_persistency),
-                new Slaves(String.valueOf(port),this.peers,elector,s_util_persistency),
+                new LeaderLog(String.valueOf(port), this.peers,this.service),
+                new Slaves(String.valueOf(port),this.peers,elector,service),
                 elector);
 
 
@@ -104,6 +98,16 @@ public class Server {
 
         ms.registerHandler("POST",(a,b)->{
             RequestsI r = this.service.s.decode(b);
+            /**
+             try {
+             r = this.service.s.decode(b);
+             }
+             catch (Exception ee){
+             System.out.println("Error");
+             ee.printStackTrace();
+             }
+             //RequestsI r = this.service.s.decode(b);*/
+            System.out.println("Passou no decode");
             r.setServer_id(idp);
             r.setAddress(Address.from(a.port()));
             Message<RequestsI> m = new Message<>("",0,r);
@@ -114,9 +118,7 @@ public class Server {
             System.out.println(man.toString());
         },e);
 
-        ServerUtil s_util_management = new ServerUtil(ms,(ScheduledExecutorService) Executors.newScheduledThreadPool(1));
-
-        man = new Management(s_util_management,persist_to_delivery,this.idp);
+        man = new Management(this.service,persist_to_delivery,this.idp);
 
         new Thread(man).start();
         new Thread(persistency).start();
