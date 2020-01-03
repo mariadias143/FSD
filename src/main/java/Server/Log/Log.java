@@ -59,9 +59,9 @@ public class Log {
 
 
     public void commit(Transaction t){
-        addState("C",t);
+        this.transaction = t;
         SegmentedJournalWriter<Object> w = privateLog.writer();
-        this.transaction.setState(this.state);
+        this.transaction.addState("C");
         w.append(this.transaction);
         CompletableFuture.supplyAsync(()->{w.flush();return null;})
                 .thenRun(()->{

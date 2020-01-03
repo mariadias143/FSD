@@ -60,6 +60,7 @@ public class Slaves {
                   try {
                       this.log.addState("P",this.transaction);
                       this.service.ms.sendAsync(leader, "OK", this.service.s.encode(this.transaction.getNumber()));
+
                   } catch (Exception ex){
                       this.log.addState("A",this.transaction);
                       this.service.ms.sendAsync(leader, "ABORT", this.service.s.encode(this.transaction.getNumber()));
@@ -130,6 +131,7 @@ public class Slaves {
               this.requests.poll();
               this.service.ms.sendAsync(leader, "OK", this.service.s.encode(this.transaction.getNumber()));
           }
+
       }
       finally {
           l.unlock();

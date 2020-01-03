@@ -3,6 +3,7 @@ package Server.Middleware.LeaderElection;
 import io.atomix.utils.net.Address;
 import Server.Middleware.Util.*;
 
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,6 +14,7 @@ public class Election {
     public boolean election_active;
     public ServerUtil service;
     public Lock l;
+    public Condition hasEnded;
 
     public Election(int id,Address[] peers,ServerUtil server){
         this.leader = null;
@@ -21,6 +23,7 @@ public class Election {
         this.election_active = false;
         this.service = server;
         this.l = new ReentrantLock();
+        this.hasEnded = this.l.newCondition();
 
         this.service.ms.registerHandler("START_ELECTION",(a,b) ->{
             try{
@@ -67,7 +70,7 @@ public class Election {
                 ElectionMessage msg = this.service.s.decode(b);
                 this.leader = new Peer(msg.id,this.other_peers[msg.id]);
                 this.election_active = false;
-                notifyAll();
+                this.hasEnded.signalAll();
 
                 System.out.println("Sou o " + current_node.id_peer + " e o leader é " + msg.id);
             }
@@ -132,8 +135,8 @@ public class Election {
     public void waitleader(){
         try{
             this.l.lock();
-            while (this.leader == null){
-                wait();
+            while(this.leader == null){
+                this.hasEnded.await();
             }
         }
         catch (Exception e){

@@ -59,4 +59,16 @@ public class Transaction {
     public synchronized boolean hasAborted(){
         return this.state.contains("A");
     }
+
+    public synchronized boolean commited(){
+        return this.state.contains("C");
+    }
+
+    public String toString(){
+        String fi = "";
+        for(String s : this.state)
+            fi = s + "-" + fi;
+
+        return fi;
+    }
 }

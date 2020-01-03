@@ -39,9 +39,7 @@ public class LeaderLog {
                 okAnswers++;
                 yesVoters.add(a);
                 if(okAnswers == peers.length) {
-                    System.out.println("Recebi todos");
                     this.log.commit(this.transaction);
-                    System.out.println("Dei commit");
                     for (Address p : peers)
                         this.service.ms.sendAsync(p, "COMMIT", this.service.s.encode(this.transaction.getNumber())).thenRun(() -> System.out.println("Enviei commit"));
 
@@ -76,7 +74,7 @@ public class LeaderLog {
         if (ack_received != peers.length) {
             for (Map.Entry<Integer, Boolean> keyval : this.controlACK.entrySet()) {
                 if (keyval.getValue() == false) {
-                    this.service.ms.sendAsync(Address.from(keyval.getKey()), "COMMIT", this.service.s.encode(this.transaction.getNumber()));
+                    this.service.ms.sendAsync(Address.from(keyval.getKey()), "COMMIT", this.service.s.encode(this.transaction.getNumber())).thenRun(()-> System.out.println("Enviei um novo commit"));
                 }
             }
             this.service.e.schedule(()->{

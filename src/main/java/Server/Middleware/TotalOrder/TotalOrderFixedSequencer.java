@@ -15,16 +15,20 @@ public class TotalOrderFixedSequencer {
     private CommunicationQueue<Message> operations_queue;
     private ServerUtil service;
     private Leader leader_middleware;
+    private TimeStampLog log;
 
 
     public TotalOrderFixedSequencer(Election e,ServerUtil service,CommunicationQueue queue){
         this.network = e;
-        this.timestamp = 1;
         this.messages_to_deliver = new PriorityQueue<>();
         this.queue_to_send = new ArrayDeque<>();
         this.service = service;
         this.leader_middleware = new Leader(service,e.other_peers);
         this.operations_queue = queue;
+        this.log = new TimeStampLog(network.current_node.ip_peer.port(),service);
+
+        int control = this.log.hasCrashed();
+        this.timestamp = control == -1 ? 1 : control;
 
         service.ms.registerHandler("DELIVER",(a,b)->{
             Message m = this.service.s.decode(b);
@@ -32,8 +36,7 @@ public class TotalOrderFixedSequencer {
 
             List<Message> list = getMessagesReady();
             list.forEach(message -> this.operations_queue.add(message));
-            System.out.println("Recebi" + list.size());
-
+            this.log.add(this.timestamp);
 
         },this.service.e);
     }
