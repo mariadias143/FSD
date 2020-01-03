@@ -15,6 +15,8 @@ import io.atomix.cluster.messaging.MessagingConfig;
 import io.atomix.cluster.messaging.impl.NettyMessagingService;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -35,6 +37,7 @@ public class Server {
     public Election elector;
     public ServerUtil service;
     public TotalOrderFixedSequencer totalorder;
+    //public TotalOrderMovingSequencer totalorder;
     public Management man;
     public Persistency persistency;
 
@@ -61,6 +64,9 @@ public class Server {
         CommunicationQueue<Message<RequestsI>> persist_to_delivery = new CommunicationQueue<>();
 
 
+        //this.totalorder = new TotalOrderFixedSequencer(elector,service,queue);
+        //this.totalorder = new TotalOrderMovingSequencer(peers,service,idp,this.buildSeqs(2),discoverSequencers(2,number_of_peers),queue);
+
         this.totalorder = new TotalOrderFixedSequencer(elector,service,totalorder_to_persist);
         this.persistency = new Persistency(
                 persist_to_delivery,
@@ -68,28 +74,33 @@ public class Server {
                 new LeaderLog(String.valueOf(port), this.peers,this.service),
                 new Slaves(String.valueOf(port),this.peers,elector,service),
                 elector);
-        //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
 
-        ms.registerHandler("msg",(a,b) ->{
-            Message m = this.service.s.decode(b);
-            totalorder.send(m);
-        },e);
+        //TotalOrderMovingSequencer totalorder = new TotalOrderMovingSequencer(elector,new ServerUtil(ms,e),idp,chat.peers);
 
         ms.registerHandler("GET",(a,b)->{
             RequestsI r = this.service.s.decode(b);
             r.setServer_id(idp);
             r.setAddress(Address.from(a.port()));
             Message<RequestsI> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
-            this.totalorder.send(m);
+            this.totalorder.send(m,this.port);
         },e);
 
         ms.registerHandler("POST",(a,b)->{
             RequestsI r = this.service.s.decode(b);
+            /**
+            try {
+                r = this.service.s.decode(b);
+            }
+            catch (Exception ee){
+                System.out.println("Error");
+                ee.printStackTrace();
+            }
+            //RequestsI r = this.service.s.decode(b);*/
             System.out.println("Passou no decode");
             r.setServer_id(idp);
             r.setAddress(Address.from(a.port()));
             Message<RequestsI> m = new Message<>(String.valueOf(port)+"-"+1,0,r);
-            this.totalorder.send(m);
+            this.totalorder.send(m,this.port);
         },e);
 
         ms.registerHandler("TESTE",(a,b)->{
@@ -104,6 +115,28 @@ public class Server {
         if (idp == 0){
             this.elector.init_election();
         }
+    }
+
+    public Map<Integer,Boolean> discoverSequencers(int n_seqs,int n_peers){
+        Map<Integer,Boolean> res = new HashMap<>();
+        for (int i = 0; i < n_peers; i++) {
+            if (i < n_seqs){
+                res.put(i,true);
+            }
+            else {
+                res.put(i,false);
+            }
+        }
+
+        return res;
+    }
+
+    public Address[] buildSeqs(int n_seqs){
+        Address[] res = new Address[n_seqs];
+        for (int i = 0; i < n_seqs; i++) {
+            res[i] = Address.from(i + 12345);
+        }
+        return res;
     }
 
     public static void main(String[] args) throws IOException {
