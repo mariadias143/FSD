@@ -32,7 +32,6 @@ public class TotalOrderFixedSequencer {
 
             List<Message> list = getMessagesReady();
             list.forEach(message -> this.operations_queue.add(message));
-            System.out.println(messages_to_deliver);
 
         },this.service.e);
     }

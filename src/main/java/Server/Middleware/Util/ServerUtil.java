@@ -13,6 +13,8 @@ import io.atomix.utils.net.Address;
 import io.atomix.utils.serializer.Serializer;
 import io.atomix.utils.serializer.SerializerBuilder;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class ServerUtil {
@@ -35,6 +37,7 @@ public class ServerUtil {
                 .addType(SignIn.class)
                 .addType(Subscribe.class)
                 .addType(Message.class)
+                .addType(Token.class)
                 .build();
     }
 

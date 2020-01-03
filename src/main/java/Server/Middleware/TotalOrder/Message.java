@@ -27,6 +27,10 @@ public class Message<F> implements Comparable<Message<F>> {
         return data;
     }
 
+    public void setId(String id){
+        this.id = id;
+    }
+
     @Override
     public int compareTo(Message<F> o) {
         if (this.timestamp < o.timestamp)
