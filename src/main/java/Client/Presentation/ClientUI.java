@@ -1,7 +1,6 @@
 package Client.Presentation;
 
 import Client.Client;
-import Client.Request.Request;
 import Client.Request.SignIn;
 
 import java.io.IOException;
@@ -138,7 +137,7 @@ public class ClientUI extends Thread {
         Set<String> topics = new HashSet<>();
         Scanner is = new Scanner(System.in);
 
-        System.out.println("Quantos tópicos estão associados à mensagem?");
+        System.out.println("Quantos tópicos deseja subscrever?");
         System.out.println("Responda com um numero:");
 
         numTopics= readOpt();
