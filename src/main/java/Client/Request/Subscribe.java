@@ -4,6 +4,7 @@ import io.atomix.cluster.messaging.ManagedMessagingService;
 import io.atomix.utils.net.Address;
 import io.atomix.utils.serializer.Serializer;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class Subscribe implements RequestsI {
@@ -14,6 +15,7 @@ public class Subscribe implements RequestsI {
     private int server_id;
     private String r_class;
     private Set<String> topics;
+    private boolean should_deliver;
 
     public Subscribe(String username,String password,Set<String> list_tops){
         this.topics = list_tops;
@@ -22,6 +24,7 @@ public class Subscribe implements RequestsI {
         this.request = "POST";
 
         this.r_class = "Subscribe";
+        this.should_deliver = true;
     }
 
     public Set<String> getTopics() {
@@ -63,5 +66,21 @@ public class Subscribe implements RequestsI {
                 .thenRun(() -> {
                     System.out.println("Pedido enviado");
                 });
+    }
+
+    public RequestsI clone(){
+        RequestsI res = new Subscribe(this.username,this.password,new HashSet<>(this.topics));
+        res.setAddress(this.ip);
+        res.setServer_id(this.server_id);
+
+        return res;
+    }
+
+    public boolean getDeliver() {
+        return this.should_deliver;
+    }
+
+    public void changeDeliver() {
+        this.should_deliver = false;
     }
 }

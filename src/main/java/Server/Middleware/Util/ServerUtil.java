@@ -4,6 +4,7 @@ import Client.Reply.GetLastTopicsReply;
 import Client.Reply.Reply;
 import Client.Reply.WriteReply;
 import Client.Request.*;
+import Server.Log.Transaction;
 import Server.Middleware.LeaderElection.Election;
 import Server.Middleware.LeaderElection.ElectionMessage;
 import Server.Middleware.TotalOrder.Message;
@@ -38,6 +39,7 @@ public class ServerUtil {
                 .addType(Subscribe.class)
                 .addType(Message.class)
                 .addType(Token.class)
+                .addType(Transaction.class)
                 .build();
     }
 

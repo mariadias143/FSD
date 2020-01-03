@@ -1,7 +1,6 @@
 package Client.Presentation;
 
 import Client.Client;
-import Client.Request.Request;
 import Client.Request.SignIn;
 
 import java.io.IOException;
@@ -9,22 +8,45 @@ import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
 
-public class ClientUI {
+public class ClientUI extends Thread {
 
     private Client client;
+    private Block block;
 
-    public ClientUI(Client client){
+
+    public ClientUI(Client client, Block block){
         this.client=client;
+        this.block=block;
+
 
     }
 
-    public void showMenuInicial(){
+    public void run(){
+        int option;
+        System.out.println("Qual a porta do servidor que se quer conetar");
+        option = this.readOpt();
+        client.setForwarderAddress(option);
+
+        while (true) {
+            showMenuInicial();
+            option = read_menu_output();
+            if (option == 0) {
+                client.shutdown();
+                break;
+                }
+        }
+
+            }
+
+
+
+    public void showMenuInicial() {
 
         System.out.println("1 -Registar | 2 -SetUp username/password | 3 - GET 10 | 4 - Publicar Mensagem | 5 - Subscrever topicos | 0 - Sair");
     }
 
 
-    public int read_menu_output() throws IOException,InterruptedException{
+    public int read_menu_output(){
         int option = this.readOpt();
 
         switch(option){
@@ -115,7 +137,7 @@ public class ClientUI {
         Set<String> topics = new HashSet<>();
         Scanner is = new Scanner(System.in);
 
-        System.out.println("Quantos tópicos estão associados à mensagem?");
+        System.out.println("Quantos tópicos deseja subscrever?");
         System.out.println("Responda com um numero:");
 
         numTopics= readOpt();

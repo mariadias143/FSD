@@ -1,6 +1,7 @@
 package Client;
 
 
+import Client.Presentation.Block;
 import Client.Reply.Reply;
 import Client.Request.Request;
 import Client.Presentation.ClientUI;
@@ -26,20 +27,22 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public class Client {
 
     private final Address myAddress;
-    private final Address forwarderAddress;
+    private Address forwarderAddress;
     private ServerUtil service;
     private String username;
     private String password;
+    private Block block;
 
-    public Client(Integer myAddress, Integer serverAddress) {
+    public Client(Integer myAddress, Block block) {
 
         this.myAddress = Address.from(myAddress);
-        this.forwarderAddress = Address.from(serverAddress);
+        this.block=block;
 
         ScheduledExecutorService e = Executors.newScheduledThreadPool(1);
 
@@ -55,9 +58,16 @@ public class Client {
         ms.registerHandler("REP",(a,b)->{
             Reply rep = service.s.decode(b);
             rep.printContent();
+            block.awake();
+
+
         },e);
 
 
+    }
+
+    public void setForwarderAddress(int portServer){
+        this.forwarderAddress= Address.from(portServer);
     }
 
     public void setUsername(String username) {
@@ -71,6 +81,7 @@ public class Client {
     public void register (String username, String password) {
         RequestsI request = new SignIn(username,password);
         request.send(service.ms, forwarderAddress, service.s);
+        block.setWait();
 
     }
 
@@ -83,6 +94,7 @@ public class Client {
         if(verifyCredentials()){
             RequestsI request = new GetLastTopics(this.username,this.password);
             request.send(service.ms,forwarderAddress,service.s);
+            block.setWait();
         }
         else
         System.out.println("Falta fazer SetUp");
@@ -92,6 +104,7 @@ public class Client {
         if (verifyCredentials()) {
             RequestsI request = new PostMessage(this.username, this.password, message, topics);
             request.send(service.ms,forwarderAddress,service.s);
+            block.setWait();
         }
         else
             System.out.println("Falta fazer SetUp");
@@ -102,6 +115,7 @@ public class Client {
         if (verifyCredentials()) {
             RequestsI request = new Subscribe(this.username, this.password, topics);
             request.send(service.ms, forwarderAddress, service.s);
+            block.setWait();
         }
         else
             System.out.println("Falta fazer SetUp");
@@ -117,23 +131,18 @@ public class Client {
 
     public static void main(String[] args) throws Exception {
 
-        int option;
         int myport = Integer.parseInt(args[0]);
-        int serverPort = Integer.parseInt(args[1]);
 
-        Client client = new Client(myport, serverPort);
 
-        ClientUI clientUI = new ClientUI(client);
 
-        while(true) {
-            clientUI.showMenuInicial();
-            option = clientUI.read_menu_output();
-            if(option==0) {
-                client.shutdown();
-                break;
+        Block block = new Block();
+        Client client = new Client(myport,block);
 
-            }
-        }
+        ClientUI clientUI = new ClientUI(client, block);
+
+        Thread t =  new Thread(clientUI);
+        t.start();
+
     }
 
 }
