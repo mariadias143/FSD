@@ -47,11 +47,13 @@ public class Persistency implements Runnable {
                 network.waitleader();
 
                 List<Transaction> old_transactions = this.slave_log.transactions_started();
-                if (old_transactions.size() == 0)
-                    System.out.println("Error a reiniciar");
 
                 Tuple<Transaction,List<Transaction>> merged_log = Persistency.mergeTransactions(old_transactions);
-                merged_log.getSecond().forEach(a -> this.delivery.add(a.getRequest()));
+                merged_log.getSecond().forEach(a -> {
+                    Message<RequestsI> msg = a.getRequest();
+                    msg.getData().changeDeliver();
+                    this.delivery.add(msg);
+                });
 
                 Transaction to_handle = merged_log.getFirst();
 
@@ -80,11 +82,11 @@ public class Persistency implements Runnable {
 
                 if (r.findType().equals("POST")){
                     Transaction t = new Transaction(req.getTimestamp(),req);
+                    Transaction t2 = new Transaction(req.getTimestamp(),req.clone(req.getData().clone()));
 
                     this.slave_log.startTransaction(t);
-                    System.out.println();
                     if (network.isLeader()){
-                        leader_log.openTransaction(t);
+                        leader_log.openTransaction(t2);
                     }
                     sync.setWait();
 

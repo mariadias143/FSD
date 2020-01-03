@@ -59,7 +59,7 @@ public class Management implements Runnable {
         switch (object){
             case "PostMessage":{
 
-                if (!authentication(r.getUsername(),r.getPassword())){
+                if (!authentication(r.getUsername(),r.getPassword()) && r.getDeliver()){
                     if (r.getServer_id() == this.process_id){
                         Reply reply = new WriteReply(1);
                         reply.reply(this.service.ms,r.getAddress(),this.service.s);
@@ -77,7 +77,7 @@ public class Management implements Runnable {
             case "Subscribe":{
 
                 if (!authentication(r.getUsername(),r.getPassword())){
-                    if (r.getServer_id() == this.process_id){
+                    if (r.getServer_id() == this.process_id && r.getDeliver()){
                         Reply reply = new WriteReply(1);
                         reply.reply(this.service.ms,r.getAddress(),this.service.s);
                     }
@@ -99,7 +99,7 @@ public class Management implements Runnable {
         User u = this.users.get(r.getUsername());
         u.subscribe(subs.getTopics().stream().collect(Collectors.toList()));
 
-        if (r.getServer_id() == this.process_id) {
+        if (r.getServer_id() == this.process_id && r.getDeliver()) {
             Reply reply = new WriteReply();
             reply.reply(this.service.ms, r.getAddress(), this.service.s);
         }
@@ -108,7 +108,7 @@ public class Management implements Runnable {
     private void handleSignIn(RequestsI r){
         Reply reply;
         if (this.users.containsKey(r.getUsername())){
-            if (r.getServer_id() == this.process_id) {
+            if (r.getServer_id() == this.process_id && r.getDeliver()) {
                 reply = new  WriteReply(2);
                 reply.reply(this.service.ms,r.getAddress(),this.service.s);
             }
@@ -118,7 +118,7 @@ public class Management implements Runnable {
         User u = new User(r.getUsername(),r.getPassword());
         this.users.put(r.getUsername(),u);
 
-        if (r.getServer_id() == this.process_id) {
+        if (r.getServer_id() == this.process_id && r.getDeliver()) {
 
             reply = new WriteReply();
             reply.reply(this.service.ms, r.getAddress(), this.service.s);
@@ -138,7 +138,7 @@ public class Management implements Runnable {
             t.post(pst.getMsg(),timestamp);
         }
 
-        if (r.getServer_id() == this.process_id){
+        if (r.getServer_id() == this.process_id && r.getDeliver()){
             Reply reply = new WriteReply();
             reply.reply(this.service.ms,r.getAddress(),this.service.s);
         }

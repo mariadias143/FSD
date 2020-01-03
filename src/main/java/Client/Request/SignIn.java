@@ -11,6 +11,7 @@ public class SignIn implements RequestsI {
     private Address ip;
     private int server_id;
     private String r_class;
+    private boolean should_deliver;
 
     public SignIn(String username,String password){
         this.username = username;
@@ -18,6 +19,7 @@ public class SignIn implements RequestsI {
         this.request = "POST";
 
         this.r_class = "SignIn";
+        this.should_deliver = true;
     }
 
     public void setAddress(Address ip){
@@ -55,5 +57,21 @@ public class SignIn implements RequestsI {
                 .thenRun(() -> {
                     System.out.println("Pedido enviado");
                 });
+    }
+
+    public RequestsI clone(){
+        RequestsI res = new SignIn(this.username,this.password);
+        res.setAddress(this.ip);
+        res.setServer_id(this.server_id);
+
+        return res;
+    }
+
+    public boolean getDeliver() {
+        return this.should_deliver;
+    }
+
+    public void changeDeliver() {
+        this.should_deliver = false;
     }
 }

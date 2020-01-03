@@ -14,4 +14,7 @@ public interface RequestsI {
     public int getServer_id();
     public String findClass();
     public String findType();
+    public RequestsI clone();
+    public void changeDeliver();
+    public boolean getDeliver();
 }

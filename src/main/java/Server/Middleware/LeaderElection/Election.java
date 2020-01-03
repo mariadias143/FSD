@@ -57,6 +57,7 @@ public class Election {
                         if (!this.other_peers[i].equals(this.current_node.ip_peer))
                             this.service.ms.sendAsync(this.other_peers[i],"COMMIT_ELECTION",this.service.s.encode(msg));
                     }
+                    this.hasEnded.signalAll();
                 }
             }
             finally {

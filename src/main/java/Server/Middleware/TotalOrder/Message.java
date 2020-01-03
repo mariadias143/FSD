@@ -11,6 +11,10 @@ public class Message<F> implements Comparable<Message<F>> {
         this.data = data;
     }
 
+    public Message<F> clone(F cloned_data){
+        return new Message<>(id,this.timestamp,data);
+    }
+
     public void setTimestamp(int timestamp) {
         this.timestamp = timestamp;
     }

@@ -13,13 +13,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class TimeStampLog {
+
+    private static String folder = "logs/";
     private SegmentedJournal privateLog;
     private Serializer s;
 
-    public TimeStampLog(int idp, ServerUtil service){
+    public TimeStampLog(int idp, ServerUtil service, boolean leader){
+        String name = leader ? "TimeStamp-Leader-Log-" : "TimeStamp-Log-" ;
         this.s = service.s;
         privateLog = SegmentedJournal.<String>builder()
-                .withName("TimeStamp-Log-" + String.valueOf(idp))
+                .withName(name + String.valueOf(idp))
                 .withSerializer(s)
                 .build();
     }

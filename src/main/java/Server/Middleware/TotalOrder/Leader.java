@@ -7,11 +7,16 @@ import Server.Middleware.Util.*;
 public class Leader {
     private ServerUtil service;
     private Address[] peers;
-    private int timestamp = 1;
+    private int timestamp;
+    private TimeStampLog log;
 
-    public Leader(ServerUtil service,Address[] peers){
+    public Leader(ServerUtil service,Address[] peers,int port){
         this.service = service;
         this.peers = peers;
+        this.log = new TimeStampLog(port,service,true);
+
+        int control = this.log.hasCrashed();
+        this.timestamp = control == -1 ? 1 : control;
 
         service.ms.registerHandler("TIMESTAMPING",(a,b)->{
             Message m = this.service.s.decode(b);
@@ -24,6 +29,7 @@ public class Leader {
             }
 
             timestamp++;
+            this.log.add(timestamp);
         },this.service.e);
     }
 }

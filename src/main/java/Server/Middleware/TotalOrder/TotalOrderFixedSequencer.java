@@ -23,9 +23,9 @@ public class TotalOrderFixedSequencer {
         this.messages_to_deliver = new PriorityQueue<>();
         this.queue_to_send = new ArrayDeque<>();
         this.service = service;
-        this.leader_middleware = new Leader(service,e.other_peers);
+        this.leader_middleware = new Leader(service,e.other_peers,network.current_node.ip_peer.port());
         this.operations_queue = queue;
-        this.log = new TimeStampLog(network.current_node.ip_peer.port(),service);
+        this.log = new TimeStampLog(network.current_node.ip_peer.port(),service,false);
 
         int control = this.log.hasCrashed();
         this.timestamp = control == -1 ? 1 : control;
@@ -36,6 +36,7 @@ public class TotalOrderFixedSequencer {
 
             List<Message> list = getMessagesReady();
             list.forEach(message -> this.operations_queue.add(message));
+            System.out.println("recebi" + list.size());
             this.log.add(this.timestamp);
 
         },this.service.e);
